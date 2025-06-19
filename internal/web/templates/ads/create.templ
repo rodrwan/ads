@@ -1,0 +1,19 @@
+package ads
+
+import "ads-system/internal/web/templates"
+
+templ CreateForm() {
+    @templates.Layout("Crear nuevo anuncio") {
+        <h1>Crear nuevo anuncio</h1>
+        <form action="/ads/create" method="post">
+            <input type="text" name="title" placeholder="Título" />
+            <input type="text" name="description" placeholder="Descripción" />
+            <input type="url" name="image_url" placeholder="URL de la imagen" />
+            <input type="url" name="destination_url" placeholder="URL de destino" />
+            <input type="text" name="cta_label" placeholder="CTA" />
+            <input type="text" name="country" placeholder="País" />
+
+            <button type="submit">Crear</button>
+        </form>
+    }
+}

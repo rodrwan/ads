@@ -1,0 +1,32 @@
+package ads
+
+import (
+    "ads-system/internal/web/templates"
+)
+
+templ AdsView(ads []templates.Ad) {
+	@templates.Layout("Mis Anuncios") {
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+			for _, ad := range ads {
+				<div class="bg-white rounded-xl shadow p-4 space-y-2">
+					<img src="{ad.ImageURL}" alt="{ad.Title}" class="w-full rounded-lg" />
+					<h3 class="text-lg font-semibold">{ ad.Title }</h3>
+					<p class="text-gray-600 text-sm">{ ad.Description }</p>
+					<a href="{ad.DestinationURL}" target="_blank" class="text-blue-500 text-sm underline block">
+						{ ad.CtaLabel}
+					</a>
+					<form method="POST" action="/simulate/impression">
+						<input type="hidden" name="ad_id" value="{ad.ID}" />
+						<input type="hidden" name="placement_id" value="30000000-0000-0000-0000-000000000001" />
+						<input type="hidden" name="campaign_id" value="{ad.CampaignID}" />
+						<button class="text-xs text-white bg-blue-500 px-3 py-1 rounded">Simular impresión</button>
+					</form>
+					<form method="POST" action="/simulate/click" class="mt-1">
+						<input type="hidden" name="ad_id" value="{ad.ID}" />
+						<button class="text-xs text-white bg-green-500 px-3 py-1 rounded">Simular clic</button>
+					</form>
+				</div>
+            }
+		</div>
+	}
+}

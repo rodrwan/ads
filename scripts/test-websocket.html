@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test WebSocket</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .connected {
+            background: #10B981;
+        }
+        .disconnected {
+            background: #EF4444;
+        }
+        .message {
+            background: #374151;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 4px solid #3B82F6;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .metric {
+            background: #374151;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #10B981;
+        }
+        .metric-label {
+            color: #9CA3AF;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test WebSocket - Dashboard en Tiempo Real</h1>
+        
+        <div id="status" class="status disconnected">
+            Estado: Desconectado
+        </div>
+        
+        <div class="metrics">
+            <div class="metric">
+                <div id="impressions" class="metric-value">0</div>
+                <div class="metric-label">Impresiones</div>
+            </div>
+            <div class="metric">
+                <div id="clicks" class="metric-value">0</div>
+                <div class="metric-label">Clicks</div>
+            </div>
+            <div class="metric">
+                <div id="ctr" class="metric-value">0%</div>
+                <div class="metric-label">CTR</div>
+            </div>
+            <div class="metric">
+                <div id="active-ads" class="metric-value">0</div>
+                <div class="metric-label">Anuncios Activos</div>
+            </div>
+        </div>
+        
+        <h3>Mensajes Recibidos:</h3>
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        let ws;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+
+        function connectWebSocket() {
+            const wsUrl = 'ws://localhost:8081/ws';
+            console.log('Conectando a:', wsUrl);
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+                console.log('✅ WebSocket conectado');
+                reconnectAttempts = 0;
+                updateStatus(true);
+                addMessage('✅ Conexión establecida');
+            };
+            
+            ws.onmessage = function(event) {
+                console.log('📨 Mensaje recibido:', event.data);
+                addMessage('📨 ' + event.data);
+                
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'metrics_update') {
+                        updateMetrics(data);
+                    }
+                } catch (error) {
+                    console.error('❌ Error parsing message:', error);
+                    addMessage('❌ Error parsing: ' + error.message);
+                }
+            };
+            
+            ws.onclose = function() {
+                console.log('❌ WebSocket desconectado');
+                updateStatus(false);
+                addMessage('❌ Conexión cerrada');
+                
+                // Intentar reconectar
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+                    addMessage(`🔄 Reconectando en ${delay/1000}s... (intento ${reconnectAttempts}/${maxReconnectAttempts})`);
+                    setTimeout(connectWebSocket, delay);
+                }
+            };
+            
+            ws.onerror = function(error) {
+                console.error('❌ WebSocket error:', error);
+                addMessage('❌ Error de conexión');
+            };
+        }
+
+        function updateStatus(connected) {
+            const statusEl = document.getElementById('status');
+            if (connected) {
+                statusEl.className = 'status connected';
+                statusEl.textContent = 'Estado: Conectado ✅';
+            } else {
+                statusEl.className = 'status disconnected';
+                statusEl.textContent = 'Estado: Desconectado ❌';
+            }
+        }
+
+        function updateMetrics(data) {
+            // Actualizar impresiones
+            const impressionsEl = document.getElementById('impressions');
+            if (impressionsEl) {
+                impressionsEl.textContent = data.total_impressions.toLocaleString();
+                impressionsEl.style.color = '#10B981';
+                setTimeout(() => { impressionsEl.style.color = '#10B981'; }, 1000);
+            }
+            
+            // Actualizar clicks
+            const clicksEl = document.getElementById('clicks');
+            if (clicksEl) {
+                clicksEl.textContent = data.total_clicks.toLocaleString();
+                clicksEl.style.color = '#10B981';
+                setTimeout(() => { clicksEl.style.color = '#10B981'; }, 1000);
+            }
+            
+            // Actualizar CTR
+            const ctrEl = document.getElementById('ctr');
+            if (ctrEl) {
+                const ctrValue = (data.ctr * 100).toFixed(2) + '%';
+                ctrEl.textContent = ctrValue;
+                ctrEl.style.color = '#10B981';
+                setTimeout(() => { ctrEl.style.color = '#10B981'; }, 1000);
+            }
+            
+            // Actualizar anuncios activos
+            const activeAdsEl = document.getElementById('active-ads');
+            if (activeAdsEl) {
+                activeAdsEl.textContent = data.active_ads;
+                activeAdsEl.style.color = '#10B981';
+                setTimeout(() => { activeAdsEl.style.color = '#10B981'; }, 1000);
+            }
+            
+            addMessage('📊 Métricas actualizadas: ' + JSON.stringify(data));
+        }
+
+        function addMessage(text) {
+            const messagesEl = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message';
+            messageEl.textContent = new Date().toLocaleTimeString() + ' - ' + text;
+            messagesEl.insertBefore(messageEl, messagesEl.firstChild);
+            
+            // Limitar a 20 mensajes
+            while (messagesEl.children.length > 20) {
+                messagesEl.removeChild(messagesEl.lastChild);
+            }
+        }
+
+        // Inicializar cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            addMessage('🚀 Iniciando test de WebSocket...');
+            connectWebSocket();
+        });
+    </script>
+</body>
+</html> 

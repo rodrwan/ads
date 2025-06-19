@@ -1,0 +1,74 @@
+services:
+  ad-system:
+    build:
+      context: .
+      dockerfile: cmd/ad-server/Dockerfile
+    ports:
+      - 8080:8080
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - redis
+      - environment
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
+      REDIS_URL: redis:6379
+      PORT: 8080
+
+  auction-engine:
+    build:
+      context: .
+      dockerfile: cmd/auction-engine/Dockerfile
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
+      REDIS_URL: redis:6379
+    depends_on:
+      - postgres
+      - redis
+      - environment
+    volumes:
+      - .:/app
+
+  campaigns:
+    build:
+      context: .
+      dockerfile: cmd/campaings/Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - environment
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
+      REDIS_URL: redis:6379
+      PORT: 8081
+    ports:
+      - 8081:8081
+    volumes:
+      - .:/app
+
+  postgres:
+    image: postgres:16
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - 6379:6379
+
+  environment:
+    image: rodrwan/secretly:latest
+    ports:
+      - 9000:9000
+    environment:
+      - PORT=9000
+
+volumes:
+  postgres_data:
