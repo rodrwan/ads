@@ -2,6 +2,8 @@
 
 This application is a comprehensive implementation of a modern advertising system, designed to understand and demonstrate the intricacies of the digital advertising world. It consists of a network of microservices, each with specific purposes within the ecosystem.
 
+![Dashboard Preview](dashboard.png)
+
 ## 🚀 Key Features
 
 - **Real-Time Bidding (RTB)**: High-performance auction engine for ad placement
