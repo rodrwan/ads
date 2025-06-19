@@ -3,6 +3,7 @@ package auction
 import (
 	"ads-system/internal/database"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sort"
 
@@ -71,6 +72,12 @@ func (uh *AuctionHandler) CreateAuction(c *gin.Context) (interface{}, int, error
 			filteredAds = append(filteredAds, ad)
 		}
 	}
+
+	// Check if we have any ads after filtering
+	if len(filteredAds) == 0 {
+		return nil, http.StatusInternalServerError, fmt.Errorf("no valid ads available for auction")
+	}
+
 	// 3. Calcular score y elegir ganador (subasta)
 	winner, others := RunAuction(filteredAds)
 
@@ -127,6 +134,10 @@ func (uh *AuctionHandler) CreateAuction(c *gin.Context) (interface{}, int, error
 }
 
 func RunAuction(bids []database.GetActiveBidsForPlacementRow) (database.GetActiveBidsForPlacementRow, []database.GetActiveBidsForPlacementRow) {
+	if len(bids) == 0 {
+		panic("RunAuction called with empty bids slice")
+	}
+
 	sort.Slice(bids, func(i, j int) bool {
 		iVal, _ := bids[i].BidPrice.Int64Value()
 		jVal, _ := bids[j].BidPrice.Int64Value()

@@ -1,0 +1,332 @@
+package campaigns
+
+import (
+	"ads-system/internal/database"
+	"ads-system/internal/web/templates"
+	"fmt"
+)
+
+type CampaignDetailData struct {
+	Campaign database.AdCampaign
+	Metrics  []database.GetCampaignMetricsRow
+	Spend    interface{}
+	Ads      []database.GetAdsByCampaignRow
+}
+
+templ Detail(data CampaignDetailData) {
+	@templates.Layout("Detalles de Campaña - Analytics") {
+		<div class="space-y-6">
+			<!-- Header con acciones -->
+			<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+				<div>
+					<div class="flex items-center gap-3 mb-2">
+						<a href="/campaigns" class="text-slate-400 hover:text-white transition-colors">
+							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+							</svg>
+						</a>
+						<h1 class="text-3xl font-bold text-white">{ data.Campaign.Name }</h1>
+						<div class="flex items-center gap-2">
+							if data.Campaign.Status.String == "active" {
+								<div class="w-2 h-2 bg-green-500 rounded-full"></div>
+								<span class="text-sm text-green-400 font-medium">Activa</span>
+							} else if data.Campaign.Status.String == "paused" {
+								<div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+								<span class="text-sm text-yellow-400 font-medium">Pausada</span>
+							} else {
+								<div class="w-2 h-2 bg-red-500 rounded-full"></div>
+								<span class="text-sm text-red-400 font-medium">Inactiva</span>
+							}
+						</div>
+					</div>
+					<p class="text-slate-400">Gestiona los detalles y rendimiento de tu campaña</p>
+				</div>
+				<div class="flex items-center gap-3">
+					if data.Campaign.Status.String == "active" {
+						<button
+							hx-post={ fmt.Sprintf("/campaigns/%s/pause", data.Campaign.ID.String()) }
+							hx-target="#campaign-status"
+							class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+							</svg>
+							Pausar
+						</button>
+					} else {
+						<button
+							hx-post={ fmt.Sprintf("/campaigns/%s/activate", data.Campaign.ID.String()) }
+							hx-target="#campaign-status"
+							class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+							</svg>
+							Activar
+						</button>
+					}
+					<button
+						onclick="document.getElementById('edit-modal').classList.remove('hidden')"
+						class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+						</svg>
+						Editar
+					</button>
+				</div>
+			</div>
+
+			<!-- Métricas principales -->
+			<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+				<div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+					<div class="flex items-center gap-3 mb-4">
+						<div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+							<svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+							</svg>
+						</div>
+						<div>
+							<div class="text-white font-semibold">Impresiones</div>
+							<div class="text-slate-400 text-sm">Total</div>
+						</div>
+					</div>
+					if len(data.Metrics) > 0 {
+						<div class="text-2xl font-bold text-white">{ data.Metrics[0].Impressions }</div>
+					} else {
+						<div class="text-2xl font-bold text-white">0</div>
+					}
+				</div>
+
+				<div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+					<div class="flex items-center gap-3 mb-4">
+						<div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+							<svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.122 2.122"/>
+							</svg>
+						</div>
+						<div>
+							<div class="text-white font-semibold">Clicks</div>
+							<div class="text-slate-400 text-sm">Total</div>
+						</div>
+					</div>
+					if len(data.Metrics) > 0 {
+						<div class="text-2xl font-bold text-white">{ data.Metrics[0].Clicks }</div>
+					} else {
+						<div class="text-2xl font-bold text-white">0</div>
+					}
+				</div>
+
+				<div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+					<div class="flex items-center gap-3 mb-4">
+						<div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+							<svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+							</svg>
+						</div>
+						<div>
+							<div class="text-white font-semibold">CTR</div>
+							<div class="text-slate-400 text-sm">Click Rate</div>
+						</div>
+					</div>
+					if len(data.Metrics) > 0 {
+						<div class="text-2xl font-bold text-white">{ fmt.Sprintf("%d%%", data.Metrics[0].Ctr) }</div>
+					} else {
+						<div class="text-2xl font-bold text-white">0.00%</div>
+					}
+				</div>
+
+				<div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+					<div class="flex items-center gap-3 mb-4">
+						<div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+							<svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+							</svg>
+						</div>
+						<div>
+							<div class="text-white font-semibold">Gasto</div>
+							<div class="text-slate-400 text-sm">Total</div>
+						</div>
+					</div>
+					<div class="text-2xl font-bold text-white">${ fmt.Sprintf("%.2f", data.Spend) }</div>
+				</div>
+			</div>
+
+			<!-- Información de la campaña -->
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				<div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+					<h3 class="text-lg font-semibold text-white mb-4">Información de la Campaña</h3>
+					<div class="space-y-4">
+						<div class="flex justify-between">
+							<span class="text-slate-400">Nombre:</span>
+							<span class="text-white font-medium">{ data.Campaign.Name }</span>
+						</div>
+						<div class="flex justify-between">
+							<span class="text-slate-400">Presupuesto Total:</span>
+							<span class="text-white font-medium">${ fmt.Sprintf("%.2f", float64(data.Campaign.Budget.Int.Int64())/100) }</span>
+						</div>
+						if data.Campaign.DailyBudget.Valid {
+							<div class="flex justify-between">
+								<span class="text-slate-400">Presupuesto Diario:</span>
+								<span class="text-white font-medium">${ fmt.Sprintf("%.2f", float64(data.Campaign.DailyBudget.Int.Int64())/100) }</span>
+							</div>
+						}
+						if data.Campaign.StartDate.Valid {
+							<div class="flex justify-between">
+								<span class="text-slate-400">Fecha de Inicio:</span>
+								<span class="text-white font-medium">{ data.Campaign.StartDate.Time.Format("02/01/2006") }</span>
+							</div>
+						}
+						if data.Campaign.EndDate.Valid {
+							<div class="flex justify-between">
+								<span class="text-slate-400">Fecha de Fin:</span>
+								<span class="text-white font-medium">{ data.Campaign.EndDate.Time.Format("02/01/2006") }</span>
+							</div>
+						}
+						<div class="flex justify-between">
+							<span class="text-slate-400">Estado:</span>
+							<span id="campaign-status" class="text-white font-medium">
+								if data.Campaign.Status.String == "active" {
+									<span class="text-green-400">Activa</span>
+								} else if data.Campaign.Status.String == "paused" {
+									<span class="text-yellow-400">Pausada</span>
+								} else {
+									<span class="text-red-400">Inactiva</span>
+								}
+							</span>
+						</div>
+						<div class="flex justify-between">
+							<span class="text-slate-400">Creada:</span>
+							<span class="text-white font-medium">{ data.Campaign.CreatedAt.Time.Format("02/01/2006 15:04") }</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+					<div class="flex items-center justify-between mb-4">
+						<h3 class="text-lg font-semibold text-white">Anuncios de la Campaña</h3>
+						<a href={ fmt.Sprintf("/campaigns/%s/ads", data.Campaign.ID.String()) } class="text-brand-400 hover:text-brand-300 text-sm font-medium">
+							Ver todos →
+						</a>
+					</div>
+					if len(data.Ads) == 0 {
+						<div class="text-center py-8">
+							<div class="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-3">
+								<svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+								</svg>
+							</div>
+							<p class="text-slate-400 text-sm">No hay anuncios en esta campaña</p>
+						</div>
+					} else {
+						<div class="space-y-3">
+							for i, ad := range data.Ads {
+								if i < 3 {
+									<div class="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg">
+										<div class="w-8 h-8 bg-brand-500/20 rounded-lg flex items-center justify-center">
+											<span class="text-brand-400 text-xs font-bold">{ i + 1 }</span>
+										</div>
+										<div class="flex-1 min-w-0">
+											<div class="text-white font-medium truncate">{ ad.Title.String }</div>
+											<div class="text-slate-400 text-sm truncate">{ ad.Description.String }</div>
+										</div>
+									</div>
+								}
+							}
+							if len(data.Ads) > 3 {
+								<div class="text-center pt-2">
+									<span class="text-slate-400 text-sm">+{ len(data.Ads) - 3 } más anuncios</span>
+								</div>
+							}
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+
+		<!-- Modal de edición -->
+		<div id="edit-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center">
+			<div class="bg-slate-800 rounded-xl p-6 w-full max-w-md mx-4">
+				<div class="flex items-center justify-between mb-6">
+					<h3 class="text-xl font-semibold text-white">Editar Campaña</h3>
+					<button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="text-slate-400 hover:text-white">
+						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+						</svg>
+					</button>
+				</div>
+
+				<form hx-put={ fmt.Sprintf("/campaigns/%s", data.Campaign.ID.String()) } hx-target="#campaign-status" class="space-y-4">
+					<div>
+						<label class="block text-sm font-medium text-slate-300 mb-2">Nombre de la Campaña</label>
+						<input
+							type="text"
+							name="name"
+							value={ data.Campaign.Name }
+							class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-brand-500"
+							required
+						/>
+					</div>
+
+					<div>
+						<label class="block text-sm font-medium text-slate-300 mb-2">Presupuesto Total ($)</label>
+						<input
+							type="number"
+							name="budget"
+							step="0.01"
+							value={ fmt.Sprintf("%.2f", float64(data.Campaign.Budget.Int.Int64())/100) }
+							class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-brand-500"
+							required
+						/>
+					</div>
+
+					<div>
+						<label class="block text-sm font-medium text-slate-300 mb-2">Presupuesto Diario ($)</label>
+						<input
+							type="number"
+							name="daily_budget"
+							step="0.01"
+							value={ func() string { if data.Campaign.DailyBudget.Valid { return fmt.Sprintf("%.2f", float64(data.Campaign.DailyBudget.Int.Int64())/100) } else { return "" } }() }
+							class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-brand-500"
+						/>
+					</div>
+
+					<div class="grid grid-cols-2 gap-4">
+						<div>
+							<label class="block text-sm font-medium text-slate-300 mb-2">Fecha de Inicio</label>
+							<input
+								type="date"
+								name="start_date"
+								value={ func() string { if data.Campaign.StartDate.Valid { return data.Campaign.StartDate.Time.Format("2006-01-02") } else { return "" } }() }
+								class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-brand-500"
+							/>
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-slate-300 mb-2">Fecha de Fin</label>
+							<input
+								type="date"
+								name="end_date"
+								value={ func() string { if data.Campaign.EndDate.Valid { return data.Campaign.EndDate.Time.Format("2006-01-02") } else { return "" } }() }
+								class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-brand-500"
+							/>
+						</div>
+					</div>
+
+					<div class="flex items-center gap-4 pt-4">
+						<button
+							type="submit"
+							class="flex-1 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+						>
+							Guardar Cambios
+						</button>
+						<button
+							type="button"
+							onclick="document.getElementById('edit-modal').classList.add('hidden')"
+							class="px-4 py-2 text-slate-400 hover:text-white transition-colors"
+						>
+							Cancelar
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	}
+}

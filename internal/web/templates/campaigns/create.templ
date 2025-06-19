@@ -1,0 +1,17 @@
+package campaigns
+
+import "ads-system/internal/web/templates"
+
+templ CreateForm() {
+    @templates.Layout("Crear campaña") {
+        <form method="POST" action="/campaigns/create" class="space-y-4">
+            <label class="block font-medium">Nombre de campaña:</label>
+            <input type="text" name="name" class="w-full p-2 border rounded-lg" required>
+            <br>
+            <label class="block font-medium">Presupuesto total:</label>
+            <input type="number" step="0.01" name="budget" class="w-full p-2 border rounded-lg" required>
+            <br>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" type="submit">Crear</button>
+        </form>
+    }
+}
